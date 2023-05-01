@@ -1,5 +1,6 @@
 #include "writer.hpp"
 #include <iomanip>
+#include <sys/statvfs.h>
 
 std::string titles[] = { "CPU:  ", "MEM:  ", "DISK: " };
 
@@ -12,18 +13,14 @@ void fetch_disk(Block* b, std::string path);
 std::string writer::Block::str()
 {
     std::stringstream s;
-    s << std::fixed << std::setprecision(2) << titles[this->type];
-    /* ignore raw info section if for CPU */
-    if (this->type != BlockType::CPU) {
-        s << (float)(this->total - this->used) / (1024 * 1024) << "/"
-          << (float)this->total / (1024 * 1024) << "GB ";
-    }
-    s << (float)this->used / (float)this->total * 100 << "%";
+    s << std::fixed << std::setprecision(2) << titles[this->type]
+      << (double)this->used / (double)this->total * 100 << "%";
     return s.str();
 }
 
 BlockListener ::BlockListener(BlockType type)
 {
+    this->disk_ctr = 20;
     this->block = {
         .type = type,
         .used = 0,
@@ -37,8 +34,11 @@ Block& BlockListener::listen(std::string path)
         fetch_cpu(&this->block);
     } else if (this->block.type == BlockType::MEMORY) {
         fetch_memory(&this->block);
-    } else if (this->block.type == BlockType::CPU) {
-        fetch_disk(&this->block, path);
+    } else if (this->block.type == BlockType::DISK) {
+        if (this->disk_ctr-- == 0 || this->block.total == 0) {
+            fetch_disk(&this->block, path);
+            this->disk_ctr = 20;
+        }
     }
     return this->block;
 }
@@ -75,7 +75,13 @@ void fetch_memory(Block* b)
 
 void fetch_disk(Block* b, std::string path)
 {
-    // TODO fetch disk for different paths
+    struct statvfs buf;
+    if (statvfs(path.c_str(), &buf) == -1) {
+        return;
+    }
+    uint64_t used = (buf.f_blocks - buf.f_bfree) / 1024;
+    uint64_t total = buf.f_blocks / 1024;
+    b->used = (uint32_t)used;
+    b->total = (uint32_t)total;
 }
-
 }

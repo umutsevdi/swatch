@@ -10,6 +10,7 @@
 
 #include "writer.hpp"
 #include <bcm2835.h>
+#include <cstdio>
 #include <iostream>
 
 #include "SSD1306_OLED.hpp"
@@ -27,6 +28,7 @@ void TestLoop(void);
 void shutdown(void);
 int main(int argc, char** argv)
 {
+
     atexit(shutdown);
     if (!bcm2835_init()) {
         printf("Error 1201: init bcm2835 library\r\n");
@@ -58,19 +60,27 @@ void TestLoop()
     oled.OLEDclearBuffer();
     oled.setTextColor(WHITE);
     oled.setCursor(0, 0);
-    oled.println("Hello world");
-    bcm2835_delay(1000);
+    oled.OLEDInvert(true);
+    bcm2835_delay(100);
 
     writer::BlockListener c_listener(writer::BlockType::CPU);
     writer::BlockListener b_listener(writer::BlockType::MEMORY);
+    writer::BlockListener d_listener(writer::BlockType::DISK);
     while (true) {
-        oled.OLEDclearBuffer();
-        oled.setCursor(0, 16);
-        writer::Block& c = c_listener.listen();
-        oled.print(c.str().c_str());
-        oled.setCursor(0, 32);
+        writer::Block& c
+            = c_listener.listen();
         writer::Block& b = b_listener.listen();
+        writer::Block& d = d_listener.listen();
+        oled.OLEDclearBuffer();
+        oled.setCursor(0, 0);
+        oled.print("                   _x");
+        oled.print("      CHANNEL 0      ");
+        oled.setCursor(4, 20);
+        oled.print(c.str().c_str());
+        oled.setCursor(4, 32);
         oled.print(b.str().c_str());
+        oled.setCursor(4, 44);
+        oled.print(d.str().c_str());
         oled.OLEDupdate();
         delay(1000);
     }
