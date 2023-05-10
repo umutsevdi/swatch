@@ -63,9 +63,9 @@ void TestLoop()
     oled.OLEDInvert(true);
     bcm2835_delay(100);
 
-    writer::BlockListener c_listener(writer::BlockType::CPU);
-    writer::BlockListener b_listener(writer::BlockType::MEMORY);
-    writer::BlockListener d_listener(writer::BlockType::DISK);
+    writer::BlockListener c_listener(writer::StatType::CPU);
+    writer::BlockListener b_listener(writer::StatType::MEMORY);
+    writer::BlockListener d_listener(writer::StatType::DISK);
     while (true) {
         writer::Block& c
             = c_listener.listen();

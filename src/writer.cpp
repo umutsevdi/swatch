@@ -6,11 +6,11 @@ std::string titles[] = { "CPU:  ", "MEM:  ", "DISK: " };
 
 namespace writer {
 
-void fetch_cpu(Block* b);
-void fetch_memory(Block* b);
-void fetch_disk(Block* b, std::string path);
+void fetch_cpu(StatBlock* b);
+void fetch_memory(StatBlock* b);
+void fetch_disk(StatBlock* b, std::string path);
 
-std::string writer::Block::str()
+std::string writer::StatBlock::str()
 {
     std::stringstream s;
     s << std::fixed << std::setprecision(2) << titles[this->type]
@@ -18,23 +18,20 @@ std::string writer::Block::str()
     return s.str();
 }
 
-BlockListener ::BlockListener(BlockType type)
+BlockListener ::BlockListener(StatType type)
+    : Channel("Stats")
 {
     this->disk_ctr = 20;
-    this->block = {
-        .type = type,
-        .used = 0,
-        .total = 0
-    };
+    this->block.type = type;
 }
 
 Block& BlockListener::listen(std::string path)
 {
-    if (this->block.type == BlockType::CPU) {
+    if (this->block.type == StatType::CPU) {
         fetch_cpu(&this->block);
-    } else if (this->block.type == BlockType::MEMORY) {
+    } else if (this->block.type == StatType::MEMORY) {
         fetch_memory(&this->block);
-    } else if (this->block.type == BlockType::DISK) {
+    } else if (this->block.type == StatType::DISK) {
         if (this->disk_ctr-- == 0 || this->block.total == 0) {
             fetch_disk(&this->block, path);
             this->disk_ctr = 20;
@@ -43,7 +40,7 @@ Block& BlockListener::listen(std::string path)
     return this->block;
 }
 
-void fetch_cpu(Block* b)
+void fetch_cpu(StatBlock* b)
 {
     std::ifstream load("/proc/loadavg");
     std::string line;
@@ -53,7 +50,7 @@ void fetch_cpu(Block* b)
     load.close();
 }
 
-void fetch_memory(Block* b)
+void fetch_memory(StatBlock* b)
 {
     std::ifstream mem("/proc/meminfo");
     std::string line;
@@ -73,7 +70,7 @@ void fetch_memory(Block* b)
     mem.close();
 }
 
-void fetch_disk(Block* b, std::string path)
+void fetch_disk(StatBlock* b, std::string path)
 {
     struct statvfs buf;
     if (statvfs(path.c_str(), &buf) == -1) {
