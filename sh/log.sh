@@ -9,8 +9,9 @@
 #*****************************************************************************
 
 function Help {
-   echo "loglist - A helpful script that prints out formatted logs of given"
-   echo "application"
+   echo "loglist"
+   echo "  A helpful script that prints out formatted logs of given application"
+   echo
    echo "Syntax: [-h/c|m]"
    echo
    echo "Options:"

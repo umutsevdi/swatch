@@ -1,4 +1,5 @@
 #include "writer.hpp"
+#include <cstring>
 #include <iomanip>
 #include <sys/statvfs.h>
 
@@ -18,14 +19,15 @@ std::string writer::StatBlock::str()
     return s.str();
 }
 
-BlockListener ::BlockListener(StatType type)
+BlockListener ::BlockListener(StatType type, std::string path)
     : Channel("Stats")
 {
     this->disk_ctr = 20;
     this->block.type = type;
+    this->path = path;
 }
 
-Block& BlockListener::listen(std::string path)
+Block& BlockListener::listen()
 {
     if (this->block.type == StatType::CPU) {
         fetch_cpu(&this->block);
@@ -33,10 +35,42 @@ Block& BlockListener::listen(std::string path)
         fetch_memory(&this->block);
     } else if (this->block.type == StatType::DISK) {
         if (this->disk_ctr-- == 0 || this->block.total == 0) {
-            fetch_disk(&this->block, path);
+            fetch_disk(&this->block, this->path);
             this->disk_ctr = 20;
         }
     }
+    return this->block;
+}
+
+ProcessListener::ProcessListener(std::string name, std::string cmd, std::string args)
+    : Channel(name)
+{
+    this->cmd = cmd;
+    this->args = args;
+    this->block = {};
+}
+
+ProcessListener::ProcessListener(std::string name, std::string args)
+    : Channel(name)
+{
+    this->cmd = "/bin/bash sh/log.sh";
+    this->args = args;
+    this->block = {};
+}
+
+Block& ProcessListener::listen()
+{
+    std::string in = (this->cmd + " " + this->args);
+    std::stringstream s;
+    char buffer[128];
+    memcpy(buffer, in.c_str(), 128);
+
+    FILE* f = popen(buffer, "r");
+    while (fgets(buffer, sizeof buffer, f) != NULL) {
+        s << buffer;
+    }
+    pclose(f);
+    this->block.lines = s.str();
     return this->block;
 }
 

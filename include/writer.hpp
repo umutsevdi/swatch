@@ -32,9 +32,8 @@ public:
     }
     /**
      * listen - updates the Block value and returns a reference
-     * @path - optional value for disk. No effect for the rest
      */
-    virtual Block& listen(std::string path = "/");
+    virtual Block& listen();
 
 private:
     std::string name;
@@ -59,17 +58,40 @@ struct StatBlock : Block {
 
 class BlockListener : Channel {
 public:
-    BlockListener(StatType type);
-    Block& listen(std::string path = "/") override;
+    BlockListener(StatType type, std::string path = "/");
+    /**
+     * listens selected stat, updates and returns the block reference
+     */
+    Block& listen() override;
 
 private:
     StatBlock block;
     int disk_ctr;
+    std::string path;
 };
 
-class LogListener : Channel {
+/******************************************************************************
+                            PROCESS_LISTENER
+*****************************************************************************/
+
+struct ProcessBlock : Block {
+    std::string lines;
+    std::string str() override { return this->lines; };
+};
+
+class ProcessListener : Channel {
 public:
-    LogListener(std::string name, std::string server);
+    ProcessListener(std::string name, std::string cmd, std::string args);
+    ProcessListener(std::string name, std::string args);
+    /**
+     * executes defined process and writes to the block
+     */
+    Block& listen() override;
+
+private:
+    std::string cmd;
+    std::string args;
+    ProcessBlock block;
 };
 
 }
