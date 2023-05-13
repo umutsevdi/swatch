@@ -4,39 +4,53 @@
  *
  * Author: Umut Sevdi
  * Created: 04/26/23
- * Description: writer.hpp - Writer object is responsible from writing the messages
+ * Description: writer.hpp - Writer object is responsible from writing the
+ * messages
 
-*****************************************************************************/
+ *****************************************************************************/
 
 #ifndef __WRITER__
-#include <fstream>
+#define __WRITER__
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
-namespace writer {
+#include <SSD1306_OLED.hpp>
+namespace sw {
 
-struct Block {
-    /**
-     * str - returns string representation of the block to display
-     * on OLED screen
-     */
-    virtual std::string str();
-};
-
-class Channel {
+class Listener {
 public:
-    Channel(std::string name)
+    Listener(std::string name)
     {
         this->name = name;
     }
-    /**
-     * listen - updates the Block value and returns a reference
-     */
-    virtual Block& listen();
+    /* listen - updates the Block value and returns a reference */
+    virtual std::string listen();
+    std::string name;
+};
+
+class Screen {
+public:
+    Screen(int width, int height, uint16_t I2C_Speed, uint8_t I2C_Address);
+    ~Screen();
+    Screen(Screen&&) = default;
+    Screen(const Screen&) = delete;
+    Screen& operator=(Screen&&) = default;
+    Screen& operator=(const Screen&) = delete;
+
+    void add_channel(Listener l);
+    /* switch to next channel */
+    void next();
+    /* switch to previous channel */
+    void prev();
+    void display();
 
 private:
-    std::string name;
+    uint8_t* screen_buffer;
+    int index;
+    std::unique_ptr<SSD1306> screen;
+    std::vector<Listener> channels;
 };
 
 /******************************************************************************
@@ -49,24 +63,15 @@ enum StatType {
     DISK
 };
 
-struct StatBlock : Block {
-    StatType type;
-    uint32_t used;
-    uint32_t total;
-    std::string str() override;
-};
-
-class BlockListener : Channel {
+class StatListener : public Listener {
 public:
-    BlockListener(StatType type, std::string path = "/");
+    StatListener(std::string path = "/");
     /**
      * listens selected stat, updates and returns the block reference
      */
-    Block& listen() override;
+    std::string listen() override;
 
 private:
-    StatBlock block;
-    int disk_ctr;
     std::string path;
 };
 
@@ -74,25 +79,20 @@ private:
                             PROCESS_LISTENER
 *****************************************************************************/
 
-struct ProcessBlock : Block {
-    std::string lines;
-    std::string str() override { return this->lines; };
-};
-
-class ProcessListener : Channel {
+class ProcessListener : public Listener {
 public:
     ProcessListener(std::string name, std::string cmd, std::string args);
     ProcessListener(std::string name, std::string args);
     /**
      * executes defined process and writes to the block
      */
-    Block& listen() override;
+    std::string listen() override;
 
 private:
     std::string cmd;
     std::string args;
-    ProcessBlock block;
 };
 
 }
+
 #endif // !__WRITER__

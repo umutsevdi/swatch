@@ -43,7 +43,7 @@ function ip {
 
 function pages {
     journalctl -o cat -u www.service --no-pager | grep "\[main" | \
-        awk '{printf "%s %s %s %s\n",$7, $8, $9,$10}' | sed "s/serveStatic# /\//g" | \
+        awk '{printf "%s %s %.30s %s\n",$7, $8, $9,$10}' | sed "s/serveStatic# /\//g" | \
         sed "s/serve#/\//g" | tr -d "]" | sed -E "s/ ([0-9]{3})/\t\1/g" | \
         sed -E "s/\/ ([A-Za-z]*)/\/\1/g" | \
         sed -E "s/([0-9.]+) ([^\0]+)\t([0-9]+)/\1\t\3\t\2/g" | uniq | tail
