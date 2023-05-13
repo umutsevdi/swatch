@@ -9,10 +9,9 @@
 
  *****************************************************************************/
 
-#ifndef __WRITER__
-#define __WRITER__
+#ifndef __SWATCH_HPP__
+#define __SWATCH_HPP__
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -30,14 +29,14 @@ public:
     std::string name;
 };
 
-class Screen {
+class ChannelManager {
 public:
-    Screen(int width, int height, uint16_t I2C_Speed, uint8_t I2C_Address);
-    ~Screen();
-    Screen(Screen&&) = default;
-    Screen(const Screen&) = delete;
-    Screen& operator=(Screen&&) = default;
-    Screen& operator=(const Screen&) = delete;
+    ChannelManager(int width, int height, uint16_t I2C_Speed, uint8_t I2C_Address);
+    ~ChannelManager();
+    ChannelManager(ChannelManager&&) = default;
+    ChannelManager(const ChannelManager&) = delete;
+    ChannelManager& operator=(ChannelManager&&) = default;
+    ChannelManager& operator=(const ChannelManager&) = delete;
 
     void add_channel(Listener l);
     /* switch to next channel */
@@ -95,4 +94,4 @@ private:
 
 }
 
-#endif // !__WRITER__
+#endif // !__SWATCH_HPP___

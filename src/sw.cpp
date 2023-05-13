@@ -4,7 +4,7 @@
 #include <sstream>
 #include <sys/statvfs.h>
 
-#include "writer.hpp"
+#include "sw.hpp"
 
 namespace sw {
 
@@ -28,7 +28,7 @@ Stat get_disk(std::string path);
  */
 inline void write_stats(std::stringstream& s, Stat stat);
 
-Screen::Screen(int width, int height, uint16_t I2C_Speed, uint8_t I2C_Address)
+ChannelManager::ChannelManager(int width, int height, uint16_t I2C_Speed, uint8_t I2C_Address)
     : screen(new SSD1306(width, height))
 {
     this->screen->OLEDbegin(I2C_Speed, I2C_Address);
@@ -47,29 +47,28 @@ Screen::Screen(int width, int height, uint16_t I2C_Speed, uint8_t I2C_Address)
     index = 0;
 }
 
-Screen::~Screen()
+ChannelManager::~ChannelManager()
 {
-    delete this->screen_buffer;
     this->screen->OLEDPowerDown();
     bcm2835_close();
 }
 
-void Screen::add_channel(Listener l)
+void ChannelManager::add_channel(Listener l)
 {
     this->channels.push_back(l);
 }
 
-inline void Screen::next()
+inline void ChannelManager::next()
 {
     index = (index + 1) % channels.size();
 }
 
-inline void Screen::prev()
+inline void ChannelManager::prev()
 {
     index = (index - 1) % channels.size();
 }
 
-void Screen::display()
+void ChannelManager::display()
 {
     this->screen->print("                   _x");
     std::stringstream s;
